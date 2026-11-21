@@ -1,0 +1,3 @@
+# Contact forms stored at runtime
+app/var/contacts/*
+!app/var/contacts/.gitkeep
