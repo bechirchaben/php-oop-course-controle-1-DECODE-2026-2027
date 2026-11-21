@@ -1,8 +1,13 @@
 RewriteEngine on
 
+# Never serve application internals (stored contact forms, config, sources, dependencies) directly.
+# REDIRECT_STATUS is empty only for the original request, so the internal rewrite to src/index.php is not blocked.
+RewriteCond %{ENV:REDIRECT_STATUS} ^$
+RewriteRule ^(config|var|vendor|src|composer\.json|composer\.lock)(/|$) - [F,L]
+
+# Every request that does not target an existing file goes through the router (including uris ending in .json).
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ ./src/index.php [L,QSA]
 
-RewriteRule !\.(css|js|icon|zip|rar|png|jpg|gif|pdf|json)$ ./src/index.php [L,QSA,NC]
 RewriteRule ^$ ./src/index.php [L,QSA,NC]
-
