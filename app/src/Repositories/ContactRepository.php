@@ -96,6 +96,21 @@ final class ContactRepository {
     }
 
     /**
+     * Returns the contact form stored in the given file, or null if there is no such file.
+     *
+     * @throws StorageException when the file exists but cannot be read
+     * @throws InvalidContactDataException when the file does not contain a valid contact form
+     */
+    public function find(string $filename): ?Contact
+    {
+        if (self::isValidFilename($filename) === false || is_file($this->getPath($filename)) === false) {
+            return null;
+        }
+
+        return $this->read($filename);
+    }
+
+    /**
      * Checks that a file name follows the "<timestamp>_<email>.json" template,
      * which also guarantees it cannot be used to reach a file outside the storage directory.
      */
