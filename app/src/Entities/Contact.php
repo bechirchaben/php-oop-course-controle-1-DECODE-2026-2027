@@ -68,6 +68,17 @@ final class Contact {
         );
     }
 
+    /**
+     * Applies a partial update. The data must have been validated with ContactValidator::validateForUpdate().
+     */
+    public function update(array $changes, int $now): void
+    {
+        $this->email = $changes['email'] ?? $this->email;
+        $this->subject = $changes['subject'] ?? $this->subject;
+        $this->message = $changes['message'] ?? $this->message;
+        $this->dateOfLastUpdate = max($now, $this->dateOfCreation);
+    }
+
     public function getEmail(): string
     {
         return $this->email;

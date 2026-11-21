@@ -55,6 +55,33 @@ final class ContactRepository {
     }
 
     /**
+     * Overwrites an existing contact file. The file name is kept, so the contact uri stays the same.
+     * The content is written to a temporary file then renamed, so a reader never sees a half-written file.
+     *
+     * @throws StorageException
+     */
+    public function update(string $filename, Contact $contact): void
+    {
+        if (self::isValidFilename($filename) === false || is_file($this->getPath($filename)) === false) {
+            throw new StorageException('the contact file ' . $filename . ' does not exist');
+        }
+
+        $temporaryPath = $this->getPath($filename) . '.' . bin2hex(random_bytes(6)) . '.tmp';
+
+        if (@file_put_contents($temporaryPath, json_encode($contact->toArray(), self::JSON_FLAGS), LOCK_EX) === false) {
+            @unlink($temporaryPath);
+
+            throw new StorageException('unable to write the contact file ' . $filename);
+        }
+
+        if (@rename($temporaryPath, $this->getPath($filename)) === false) {
+            @unlink($temporaryPath);
+
+            throw new StorageException('unable to replace the contact file ' . $filename);
+        }
+    }
+
+    /**
      * Returns every valid stored contact form, oldest first, indexed by file name.
      * Files that cannot be read or do not contain a valid contact form are skipped and logged.
      *
