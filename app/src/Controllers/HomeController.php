@@ -2,8 +2,9 @@
 
 namespace App\Controllers;
 
-use App\Http\Request;
-use App\Http\Response;
+use App\lib\Http\Request;
+use App\lib\Http\Response;
+use App\lib\Controllers\AbstractController;
 
 class HomeController extends AbstractController {
     public function process(Request $request): Response {
