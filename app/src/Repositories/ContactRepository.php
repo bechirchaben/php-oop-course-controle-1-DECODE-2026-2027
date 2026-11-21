@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 use App\Entities\Contact;
 use App\Exceptions\ContactAlreadyExistsException;
+use App\Exceptions\InvalidContactDataException;
 use App\Exceptions\StorageException;
 
 /**
@@ -51,6 +52,81 @@ final class ContactRepository {
         }
 
         return $filename;
+    }
+
+    /**
+     * Returns every valid stored contact form, oldest first, indexed by file name.
+     * Files that cannot be read or do not contain a valid contact form are skipped and logged.
+     *
+     * @return array<string, Contact>
+     * @throws StorageException
+     */
+    public function findAll(): array
+    {
+        if (is_dir(self::STORAGE_DIRECTORY) === false) {
+            return [];
+        }
+
+        $paths = glob(self::STORAGE_DIRECTORY . '/*.json');
+
+        if ($paths === false) {
+            throw new StorageException('unable to list the contact files');
+        }
+
+        $filenames = array_map('basename', $paths);
+        natsort($filenames);
+
+        $contacts = [];
+
+        foreach ($filenames as $filename) {
+            if (self::isValidFilename($filename) === false) {
+                continue;
+            }
+
+            try {
+                $contacts[$filename] = $this->read($filename);
+            } catch (InvalidContactDataException | StorageException $e) {
+                error_log('Skipping contact file ' . $filename . ': ' . $e->getMessage() . ' ' . json_encode(
+                    $e instanceof InvalidContactDataException ? $e->getErrors() : []
+                ));
+            }
+        }
+
+        return $contacts;
+    }
+
+    /**
+     * Checks that a file name follows the "<timestamp>_<email>.json" template,
+     * which also guarantees it cannot be used to reach a file outside the storage directory.
+     */
+    public static function isValidFilename(string $filename): bool
+    {
+        return preg_match('/^\d{1,20}_[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}\.json$/', $filename) === 1;
+    }
+
+    /**
+     * @throws StorageException when the file cannot be read
+     * @throws InvalidContactDataException when the file does not contain a valid contact form
+     */
+    private function read(string $filename): Contact
+    {
+        $content = @file_get_contents($this->getPath($filename));
+
+        if ($content === false) {
+            throw new StorageException('unable to read the contact file ' . $filename);
+        }
+
+        try {
+            $data = json_decode($content, true, 512, JSON_THROW_ON_ERROR);
+        } catch (\JsonException $e) {
+            throw new InvalidContactDataException('the contact file is not valid JSON');
+        }
+
+        if (is_array($data) === false) {
+            throw new InvalidContactDataException('the contact file does not contain a JSON object');
+        }
+
+        return Contact::fromArray($data);
     }
 
     private function ensureStorageDirectoryExists(): void
