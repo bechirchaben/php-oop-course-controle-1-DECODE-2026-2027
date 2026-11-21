@@ -82,6 +82,26 @@ final class ContactRepository {
     }
 
     /**
+     * Deletes a contact file. Returns false if there is no such file.
+     *
+     * @throws StorageException when the file exists but cannot be deleted
+     */
+    public function delete(string $filename): bool
+    {
+        $path = $this->getPath($filename);
+
+        if (self::isValidFilename($filename) === false || is_file($path) === false) {
+            return false;
+        }
+
+        if (@unlink($path) === false) {
+            throw new StorageException('unable to delete the contact file ' . $filename);
+        }
+
+        return true;
+    }
+
+    /**
      * Returns every valid stored contact form, oldest first, indexed by file name.
      * Files that cannot be read or do not contain a valid contact form are skipped and logged.
      *
