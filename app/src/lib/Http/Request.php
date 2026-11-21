@@ -102,7 +102,7 @@ class Request {
         $decoded = json_decode($this->rawBody, false, 512, JSON_THROW_ON_ERROR);
 
         if (!$decoded instanceof \stdClass) {
-            throw new \UnexpectedValueException('The request body must be a JSON object.');
+            throw new \UnexpectedValueException('the request body must be a JSON object');
         }
 
         return get_object_vars($decoded);
