@@ -20,7 +20,7 @@ class Router {
         foreach($routes as $route) {
             $this->validateConfig($route);
             
-            if($this->checkUri($request, $route('uri')) === false) {
+            if($this->checkUri($request, $route['uri']) === false) {
                 continue;
             }
             $uriFoundFlag = true;
@@ -47,7 +47,7 @@ class Router {
         }
 
         $response->statusCode = 404;
-        $response->content = "route note found";
+        $response->content = "route not found";
 
         return $response;
     }
@@ -65,7 +65,7 @@ class Router {
     
     private function validateConfig(array $route): void {
         if(array_key_exists('uri', $route) === false || array_key_exists('method', $route) === false) {
-            throw new \Exception(500, 'Le fichier de config est mal écrit');
+            throw new \Exception('Le fichier de config est mal écrit', 500);
         }
     }
 
@@ -97,5 +97,3 @@ class Router {
  
     
 }
-
-?>
